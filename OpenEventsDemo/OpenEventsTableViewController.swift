@@ -25,32 +25,13 @@ class OpenEventsTableViewController: UITableViewController, AlertPresenter {
     let CELL_HEIGHT : CGFloat = 110.0
     
     
-    func getEventsForCoordinates(lat: String, lon: String) {
-        let params = ["lat" : lat, "lon" : lon]
-        let callback : Callback = (
-            success: { result in
-                if let json = result {
-                    
-                    self.openEvents = json["results"].arrayValue
-                        .map { OpenEvent.fromJSON($0) }
-                        .sorted { first, second in return first.distance < second.distance }
-                    
-                    self.tableView.reloadData()
-                    UIView.animate(withDuration: 0.35, animations: { self.tableView.alpha = 1.0 })
-                    self.title = "\(self.openEvents?.count ?? 0) nearby events"
-                }
-            },
-            failure: { _ in self.presentAlert(alertOptions: AlertOptions(message: "Error retrieving events."))}
-        )
-        APIManager.sharedInstance.getNearbyEvents(params: params, callback: callback)
-    }
+    // MARK: - UIViewController 
     
     override func viewDidLoad() {
         super.viewDidLoad()
         self.tableView.alpha = 0.0
         self.tableView.register(UINib(nibName: "OpenEventTableViewCell", bundle: nil), forCellReuseIdentifier: OpenEventTableViewCell.reuseIdentifier)
         locationManager.requestLocation()
-
     }
 
     // MARK: - Table view data source
@@ -76,11 +57,34 @@ class OpenEventsTableViewController: UITableViewController, AlertPresenter {
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return CELL_HEIGHT
     }
+    
+    // MARK: - API call
  
-
+    func getEventsForCoordinates(lat: String, lon: String) {
+        let params = ["lat" : lat, "lon" : lon]
+        let callback : Callback = (
+            success: { result in
+                if let json = result {
+                    
+                    self.openEvents = json["results"].arrayValue
+                        .map { OpenEvent.fromJSON($0) }
+                        .sorted { first, second in return first.distance < second.distance }
+                    
+                    self.tableView.reloadData()
+                    UIView.animate(withDuration: 0.35, animations: { self.tableView.alpha = 1.0 })
+                    self.title = "\(self.openEvents?.count ?? 0) nearby events"
+                }
+            },
+            failure: { _ in self.presentAlert(alertOptions: AlertOptions(message: "Error retrieving events."))}
+        )
+        APIManager.sharedInstance.getNearbyEvents(params: params, callback: callback)
+    }
+    
 }
 
-// MARK: - Location manager delegate
+
+
+    // MARK: - Location manager delegate
 extension OpenEventsTableViewController : CLLocationManagerDelegate {
     
     func gotLocation(locations: [CLLocation]?, error: Error?) {
